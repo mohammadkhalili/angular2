@@ -8,6 +8,7 @@ addons:
   # otherwise a number of tests in test/security/html_sanitizer_test.dart fail
   firefox: "latest"
 before_script: ./tool/travis_before_script.sh
+after_script: ./tool/travis_after_script.sh
 dart_task:
   - test: -x codegen --platform vm
   # Disable parallelism on Firefox (-j 1)
@@ -19,17 +20,33 @@ dart_task:
   # https://github.com/dart-lang/angular2/issues/272
 matrix:
   include:
+    #
     # Only validate formatting using the dev release
     # Formatted with 1.23.0-dev.10.0 which has (good) changes since 1.22.1
     - dart: dev
       dart_task: dartfmt
+    #
     # Only care about being analyzer clean for dev and stable
+    #
     - dart: dev
       dart_task:
         dartanalyzer: --fatal-warnings lib
     - dart: stable
       dart_task:
         dartanalyzer: --fatal-warnings lib
+    #
+    # Use PUB_PORT for codegen tests and dartium
+    #
+    - dart: dev
+      env: PUB_PORT=8283
+      dart_task:
+        test: --pub-serve=$PUB_PORT -t codegen -p dartium test/security
+        install_dartium: true
+    - dart: stable
+      env: PUB_PORT=8283
+      dart_task:
+        test: --pub-serve=$PUB_PORT -t codegen -p dartium test/security
+        install_dartium: true
 cache:
   directories:
     - $HOME/.pub-cache
